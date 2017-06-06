@@ -69,22 +69,22 @@
 
 (def app
   (api
-    {:swagger
-     {:ui "/"
-      :spec "/swagger.json"
-      :version "0.1.0"
-      :data {:info {:title "FXC-webapi"
-                    :description "FXC web API for simple secret sharing"}
-             :tags [{:name "secrets", :description "secrets.dyne.org"}]}}}
+   {:swagger
+    {:ui "/"
+     :spec "/swagger.json"
+     :version "0.1.0"
+     :data {:info {:title "FXC-webapi"
+                   :description "FXC web API for simple secret sharing"}
+            :tags [{:name "secrets", :description "secrets.dyne.org"}]}}}
 
-    (context "/api/v1" []
-      :tags ["FXC1"]
+   (context "/api/v1" []
+            :tags ["FXC1"]
 
-      (POST "/share" []
-        :return Shares
-        :body [secret Secret]
-        :summary "Split a secret into shares"
-        :description "
+            (POST "/share" []
+                  :return Shares
+                  :body [secret Secret]
+                  :summary "Split a secret into shares"
+                  :description "
 
 Takes a JSON structure made of a `secret` string and a `config`
 structure of optional fields (defaults are applied when missing) where
@@ -94,16 +94,16 @@ It executes the FXC secret sharing on the `secret` and returns a
 `shares` array of strings plus the complete `config` used to split the
 secret into `total` shares, for which a `quorum` quantity of shares is
 enough to retrieve the original secret."
-        (ok (let [conf (get-config secret)]
-              {:shares (fxc/encode conf (:secret secret))
-               :config conf})))
+                  (ok (let [conf (get-config secret)]
+                        {:shares (fxc/encode conf (:secret secret))
+                         :config conf})))
 
 
-      (POST "/combine" []
-        :return Secret
-        :body [shares Shares]
-        :summary "Combine shares into a secret"
-        (ok (let [conf (get-config shares)]
-              {:secret (fxc/decode conf (:shares shares))
-               :config conf})))
-    )))
+            (POST "/combine" []
+                  :return Secret
+                  :body [shares Shares]
+                  :summary "Combine shares into a secret"
+                  (ok (let [conf (get-config shares)]
+                        {:secret (fxc/decode conf (:shares shares))
+                         :config conf})))
+            )))
