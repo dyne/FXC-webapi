@@ -40,13 +40,16 @@
    (s/optional-key :total)    (rjs/field s/Int {:example 5})
    (s/optional-key :quorum)   (rjs/field s/Int {:example 3})
    (s/optional-key :alphabet)
-   (rjs/field s/Str {:example "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"})
+   (rjs/field
+    s/Str {:example "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"})
    (s/optional-key :salt)
    (rjs/field s/Str {:example "gvXpBGp32DRIsPy1m1G3VlWHAF5nsi0auYnMIJQ0odZRKAGC"})
    (s/optional-key :prime) (rjs/field s/Str {:example 'prime4096})
-   (s/optional-key :max) (rjs/field s/Int {:example 2048})
+   (s/optional-key :max) (rjs/field s/Int {:example 256})
    })
 
+(s/defschema Config
+  {(s/required-key :config) config-scheme})
 
 (s/defschema Secret
   {(s/required-key :secret)
@@ -93,7 +96,9 @@ most relevant settings are `total` and `quorum`.
 It executes the FXC secret sharing on the `secret` and returns a
 `shares` array of strings plus the complete `config` used to split the
 secret into `total` shares, for which a `quorum` quantity of shares is
-enough to retrieve the original secret."
+enough to retrieve the original secret.
+
+"
                   (ok (let [conf (get-config secret)]
                         {:shares (fxc/encode conf (:secret secret))
                          :config conf})))
@@ -105,5 +110,13 @@ enough to retrieve the original secret."
                   :summary "Combine shares into a secret"
                   (ok (let [conf (get-config shares)]
                         {:secret (fxc/decode conf (:shares shares))
+                         :config conf})))
+
+            (POST "/generate" []
+                  :return Secret
+                  :body [config Config]
+                  :summary "Generate a random string of defined length"
+                  (ok (let [conf (get-config config)]
+                        {:secret (fxc/generate conf (:max conf))
                          :config conf})))
             )))
