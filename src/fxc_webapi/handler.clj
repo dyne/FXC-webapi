@@ -23,25 +23,34 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s]
             [ring.swagger.json-schema :as rjs]
-            [fxc.core :as fxc]))
+            [fxc.core :as fxc]
+            [fxc-webapi.config :refer :all]))
 
 ;; https://github.com/metosin/ring-swagger
 
-(s/defschema Secret
-  {(s/required-key :secret)
-   (rjs/field s/Str {:example "La gatta sul tetto che scotta"})
+(def config-scheme
+  {
    (s/optional-key :total)    (rjs/field s/Int {:example 5})
    (s/optional-key :quorum)   (rjs/field s/Int {:example 3})
-   (s/optional-key :protocol) (rjs/field s/Str {:example "FXC1"})
    (s/optional-key :alphabet)
    (rjs/field s/Str {:example "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"})
    (s/optional-key :salt)
    (rjs/field s/Str {:example "gvXpBGp32DRIsPy1m1G3VlWHAF5nsi0auYnMIJQ0odZRKAGC"})
+   (s/optional-key :prime) (rjs/field s/Str {:example 'prime4096})
+   (s/optional-key :max) (rjs/field s/Int {:example 2048})
+   })
+
+
+(s/defschema Secret
+  {(s/required-key :secret)
+   (rjs/field s/Str {:example "La gatta sul tetto che scotta"})
+   (s/optional-key :config) config-scheme
    })
 
 
 (s/defschema Shares
-  {:shares [s/Str]})
+  {:shares [s/Str]
+   :config config-scheme})
 
 (def app
   (api
@@ -52,14 +61,18 @@
                     :description "FXC web API for simple secret sharing"}
              :tags [{:name "secrets", :description "secrets.dyne.org"}]}}}
 
-    (context "/api" []
-      :tags ["fxc" "api"]
+    (context "/api/v1" []
+      :tags ["FXC1"]
 
       (POST "/share" []
-        :return [s/Str]
+        :return Shares
         :body [secret Secret]
         :summary "Split a secret into shares"
-        (ok ["testando" "gli" "array"]))
+        (ok (let [inconf (:config secret)
+                  conf   (merge config-default inconf)]
+              {:shares (fxc/encode conf (:secret secret))
+               :config conf})))
+
 
       (POST "/combine" []
         :return Shares
