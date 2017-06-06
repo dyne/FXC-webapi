@@ -72,6 +72,7 @@
     {:swagger
      {:ui "/"
       :spec "/swagger.json"
+      :version "0.1.0"
       :data {:info {:title "FXC-webapi"
                     :description "FXC web API for simple secret sharing"}
              :tags [{:name "secrets", :description "secrets.dyne.org"}]}}}
@@ -83,6 +84,16 @@
         :return Shares
         :body [secret Secret]
         :summary "Split a secret into shares"
+        :description "
+
+Takes a JSON structure made of a `secret` string and a `config`
+structure of optional fields (defaults are applied when missing) where
+most relevant settings are `total` and `quorum`.
+
+It executes the FXC secret sharing on the `secret` and returns a
+`shares` array of strings plus the complete `config` used to split the
+secret into `total` shares, for which a `quorum` quantity of shares is
+enough to retrieve the original secret."
         (ok (let [conf (get-config secret)]
               {:shares (fxc/encode conf (:secret secret))
                :config conf})))
