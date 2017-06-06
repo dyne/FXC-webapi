@@ -28,6 +28,13 @@
 
 ;; https://github.com/metosin/ring-swagger
 
+(defn get-config
+  [obj] {:pre [(contains? obj :config)]}
+  (let [mc (merge config-default (:config obj))]
+    (merge mc {:total  (Integer. (:total mc))
+               :quorum (Integer. (:quorum mc))})))
+
+
 (def config-scheme
   {
    (s/optional-key :total)    (rjs/field s/Int {:example 5})
@@ -49,8 +56,16 @@
 
 
 (s/defschema Shares
-  {:shares [s/Str]
-   :config config-scheme})
+  {(s/required-key :shares)
+   (rjs/field
+    [s/Str]
+    {:example
+     ["3NQFX9V46VNDB2K394ZMUM8MLZRWNCZQKXN5WT42R57L6KBD3Z7VRL5B3864MNX9U6725R6EVHG"
+      "KNGF57RRP369H5DX4KKWUQ9KZ8W99TL2PR3G2WFGE7D3X6MBD736WV3LFXZ85M3V8H9D9ZZE5KSL"
+      "XLVF45ELQ7MGSZQEW2GP4C234G4WPQTKWKMM9MEBL79RLVV2SV5LZ569KFDLDNRWX6F932X74W6HQ"
+      "REWFRXX9W3EECNR5QEMXXUWNR7RXNZBQER43PK5S84E2ZLR7T4KZDRZV4B569QZP5NSRGQ4D83ESK"
+      "79PFVMVX4RK8FDRQ9DQGVCR3MV3V7DH7KDM6GZQAG3RM7P26H5MQ35L3GSR4X8N8KQF84KRKR59T3"]})
+   (s/optional-key :config) config-scheme})
 
 (def app
   (api
@@ -68,18 +83,16 @@
         :return Shares
         :body [secret Secret]
         :summary "Split a secret into shares"
-        (ok (let [inconf (:config secret)
-                  conf   (merge config-default inconf)]
+        (ok (let [conf (get-config secret)]
               {:shares (fxc/encode conf (:secret secret))
                :config conf})))
 
 
       (POST "/combine" []
-        :return Shares
+        :return Secret
         :body [shares Shares]
         :summary "Combine shares into a secret"
-        (ok shares))
-
-      )
-    )
-  )
+        (ok (let [conf (get-config shares)]
+              {:secret (fxc/decode conf (:shares shares))
+               :config conf})))
+    )))
