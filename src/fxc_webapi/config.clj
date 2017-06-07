@@ -20,6 +20,8 @@
 
 (ns fxc-webapi.config
   (:require [clojure.java.io :as io]
+            [schema.core :as s]
+            [ring.swagger.json-schema :as rjs]
             [cheshire.core :refer :all]))
 
 (def config-default {;; FXC
@@ -34,7 +36,45 @@
                      :pgp-sec-keyring "~/.gnupg/secring.gpg"
                      })
 
-(defn def [key] {:example (key config-default)})
+(defn- k [type key default]
+  (rjs/field type {:example (get default key)}))
+
+(def config-scheme
+  {
+   (s/optional-key :total)    (k s/Int :total    config-default)
+   (s/optional-key :quorum)   (k s/Int :quorum   config-default)
+   (s/optional-key :alphabet) (k s/Str :alphabet config-default)
+   (s/optional-key :salt)     (k s/Str :salt     config-default)
+   (s/optional-key :prime)    (k s/Str :prime    config-default)
+   (s/optional-key :max)      (k s/Int :max      config-default)
+   (s/optional-key :pgp-pub-keyring) (k s/Str :pgp-pub-keyring config-default)
+   (s/optional-key :pgp-sec-keyring) (k s/Str :pgp-sec-keyring config-default)
+   })
+
+(s/defschema Config
+  {(s/required-key :config) config-scheme})
+
+(s/defschema Secret
+  {(s/required-key :data)
+   (rjs/field s/Str {:example "La gatta sul tetto che scotta"})
+   (s/optional-key :config) config-scheme
+   })
+
+
+(s/defschema Shares
+  {(s/required-key :data)
+   (rjs/field
+    [s/Str]
+    {:example
+     ["3NQFX9V46VNDB2K394ZMUM8MLZRWNCZQKXN5WT42R57L6KBD3Z7VRL5B3864MNX9U6725R6EVHG"
+      "KNGF57RRP369H5DX4KKWUQ9KZ8W99TL2PR3G2WFGE7D3X6MBD736WV3LFXZ85M3V8H9D9ZZE5KSL"
+      "XLVF45ELQ7MGSZQEW2GP4C234G4WPQTKWKMM9MEBL79RLVV2SV5LZ569KFDLDNRWX6F932X74W6HQ"
+      "REWFRXX9W3EECNR5QEMXXUWNR7RXNZBQER43PK5S84E2ZLR7T4KZDRZV4B569QZP5NSRGQ4D83ESK"
+      "79PFVMVX4RK8FDRQ9DQGVCR3MV3V7DH7KDM6GZQAG3RM7P26H5MQ35L3GSR4X8N8KQF84KRKR59T3"]})
+   (s/optional-key :config) config-scheme})
+
+
+
 
 (defn config-read
   "read configurations from standard locations, overriding defaults or

@@ -22,7 +22,6 @@
   (:require [compojure.api.sweet :refer :all]
             [ring.util.http-response :refer :all]
             [schema.core :as s]
-            [ring.swagger.json-schema :as rjs]
             [fxc.core :as fxc]
             [ring.middleware.defaults :refer
              [wrap-defaults site-defaults]]
@@ -33,7 +32,7 @@
 ;; https://github.com/metosin/ring-swagger
 
 ;; sanitize configuration or returns nil if not found
-(defn get-config [obj]
+(defn- get-config [obj]
   (if (contains? obj :config)
     (let [mc (merge config-default (:config obj))]
       (merge mc {:total  (Integer. (:total mc))
@@ -41,50 +40,13 @@
     nil))
 
 ;; generic wrapper to make conf structure optional on fxc calls
-(defn run-fxc [func obj schema]
+(defn- run-fxc [func obj schema]
   (if-let [conf (get-config obj)]
     {:data (func conf (:data obj))
      :config conf}
     {:data (func config-default (:data obj))
      :config config-default}))
 
-
-(def config-scheme
-  {
-   (s/optional-key :total)    (rjs/field s/Int {:example 5})
-   (s/optional-key :quorum)   (rjs/field s/Int {:example 3})
-   (s/optional-key :alphabet)
-   (rjs/field
-    s/Str {:example "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"})
-   (s/optional-key :salt)
-   (rjs/field s/Str {:example "gvXpBGp32DRIsPy1m1G3VlWHAF5nsi0auYnMIJQ0odZRKAGC"})
-   (s/optional-key :prime) (rjs/field s/Str {:example 'prime4096})
-   (s/optional-key :max) (rjs/field s/Int {:example 256})
-   (s/optional-key :pgp-pub-keyring) s/Str
-   (s/optional-key :pgp-sec-keyring) s/Str
-   })
-
-(s/defschema Config
-  {(s/required-key :config) config-scheme})
-
-(s/defschema Secret
-  {(s/required-key :data)
-   (rjs/field s/Str {:example "La gatta sul tetto che scotta"})
-   (s/optional-key :config) config-scheme
-   })
-
-
-(s/defschema Shares
-  {(s/required-key :data)
-   (rjs/field
-    [s/Str]
-    {:example
-     ["3NQFX9V46VNDB2K394ZMUM8MLZRWNCZQKXN5WT42R57L6KBD3Z7VRL5B3864MNX9U6725R6EVHG"
-      "KNGF57RRP369H5DX4KKWUQ9KZ8W99TL2PR3G2WFGE7D3X6MBD736WV3LFXZ85M3V8H9D9ZZE5KSL"
-      "XLVF45ELQ7MGSZQEW2GP4C234G4WPQTKWKMM9MEBL79RLVV2SV5LZ569KFDLDNRWX6F932X74W6HQ"
-      "REWFRXX9W3EECNR5QEMXXUWNR7RXNZBQER43PK5S84E2ZLR7T4KZDRZV4B569QZP5NSRGQ4D83ESK"
-      "79PFVMVX4RK8FDRQ9DQGVCR3MV3V7DH7KDM6GZQAG3RM7P26H5MQ35L3GSR4X8N8KQF84KRKR59T3"]})
-   (s/optional-key :config) config-scheme})
 
 (def rest-api
   (api
