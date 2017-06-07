@@ -54,14 +54,15 @@
    {:swagger
     {:ui "/"
      :spec "/swagger.json"
-
-     :data {:info {:version "0.1.0"
-                   :title "FXC-webapi"
-                   :description "FXC web API for simple secret sharing"}}}}
+     :data {:info
+            {:version "0.1.0"
+             :title "FXC-webapi"
+             :description "FXC web API for simple secret sharing"
+             :contact {:url "https://github.com/dyne/fxc-webapi"}}}}}
 
    (context "/" []
             :tags ["static"]
-            (GET "/readme" request
+             (GET "/readme" request
                  {:headers {"Content-Type"
                             "text/html; charset=utf-8"}
                   :body (md/md-to-html-string
@@ -78,10 +79,10 @@
                         {:data (pgp/init conf)
                          :config conf}))))
 
-   (context "/api/v1" []
+   (context "/fxc/v1" []
             :tags ["FXC"]
 
-            (POST "/share" []
+            (GET "/secrets" []
                   :return Shares
                   :body [secret Secret]
                   :summary "Split a secret into shares"
@@ -101,14 +102,14 @@ enough to retrieve the original secret.
 
 
 
-            (POST "/combine" []
+            (POST "/secrets" []
                   :return Secret
                   :body [shares Shares]
                   :summary "Combine shares into a secret"
                   (ok (run-fxc fxc/decode shares Shares)))
 
 
-            (POST "/generate" []
+            (GET "/random" []
                   :return Secret
                   :body [config Config]
                   :summary "Generate a random string of defined length"
