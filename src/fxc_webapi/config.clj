@@ -32,8 +32,10 @@
                      :alphabet "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
                      :salt "gvXpBGp32DRIsPy1m1G3VlWHAF5nsi0auYnMIJQ0odZRKAGC"
                      ;; OpenPGP
-                     :pgp-pub-keyring "~/.gnupg/pubring.gpg"
-                     :pgp-sec-keyring "~/.gnupg/secring.gpg"
+                     :pgp-pub-keyring  "pubring.gpg"
+                     :pgp-sec-keyring  "secring.gpg"
+                     ;; (str (System/getenv "HOME") "/.gnupg/pubring.gpg")
+                     ;; (str (System/getenv "HOME") "/.gnupg/secring.gpg")
                      })
 
 (defn- k [type key default]
@@ -73,7 +75,10 @@
       "79PFVMVX4RK8FDRQ9DQGVCR3MV3V7DH7KDM6GZQAG3RM7P26H5MQ35L3GSR4X8N8KQF84KRKR59T3"]})
    (s/optional-key :config) config-scheme})
 
-
+(s/defschema Keyring
+  {(s/optional-key :data) {(s/optional-key :public-keys) [s/Str]
+                           (s/optional-key :secret-keys) [s/Str]}
+   (s/required-key :config) config-scheme})
 
 
 (defn config-read

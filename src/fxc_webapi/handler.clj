@@ -27,7 +27,8 @@
              [wrap-defaults site-defaults]]
             [ring.middleware.session :refer :all]
             [markdown.core :as md]
-            [fxc-webapi.config :refer :all]))
+            [fxc-webapi.config :refer :all]
+            [fxc-webapi.pgp :as pgp]))
 
 ;; https://github.com/metosin/ring-swagger
 
@@ -66,9 +67,19 @@
                   :body (md/md-to-html-string
                          (slurp "README.md"))}))
 
+   (context "/pgp/v1" []
+            :tags ["PGP"]
+
+            (POST "/init" []
+                  :return Keyring
+                  :body [config Config]
+                  :summary "Initialise pgp keyring, return list of known keys"
+                  (ok (let [conf (get-config config)]
+                        {:data (pgp/init conf)
+                         :config conf}))))
 
    (context "/api/v1" []
-            :tags ["FXC1"]
+            :tags ["FXC"]
 
             (POST "/share" []
                   :return Shares
