@@ -24,6 +24,10 @@
             [schema.core :as s]
             [ring.swagger.json-schema :as rjs]
             [fxc.core :as fxc]
+            [ring.middleware.defaults :refer
+             [wrap-defaults site-defaults]]
+            [ring.middleware.session :refer :all]
+            [markdown.core :as md]
             [fxc-webapi.config :refer :all]))
 
 ;; https://github.com/metosin/ring-swagger
@@ -70,15 +74,24 @@
       "79PFVMVX4RK8FDRQ9DQGVCR3MV3V7DH7KDM6GZQAG3RM7P26H5MQ35L3GSR4X8N8KQF84KRKR59T3"]})
    (s/optional-key :config) config-scheme})
 
-(def app
+(def rest-api
   (api
    {:swagger
     {:ui "/"
      :spec "/swagger.json"
-     :version "0.1.0"
-     :data {:info {:title "FXC-webapi"
-                   :description "FXC web API for simple secret sharing"}
-            :tags [{:name "secrets", :description "secrets.dyne.org"}]}}}
+
+     :data {:info {:version "0.1.0"
+                   :title "FXC-webapi"
+                   :description "FXC web API for simple secret sharing"}}}}
+
+   (context "/" []
+            :tags ["static"]
+            (GET "/readme" request
+                 {:headers {"Content-Type"
+                            "text/html; charset=utf-8"}
+                  :body (md/md-to-html-string
+                         (slurp "README.md"))}))
+
 
    (context "/api/v1" []
             :tags ["FXC1"]
@@ -120,3 +133,15 @@ enough to retrieve the original secret.
                         {:secret (fxc/generate conf (:max conf))
                          :config conf})))
             )))
+
+(def rest-api-defaults
+  "A default configuration for a browser-accessible website that's accessed
+  securely over HTTPS."
+  (-> site-defaults
+      (assoc-in [:cookies] false)
+      (assoc-in [:security :anti-forgery] false)
+      (assoc-in [:security :ssl-redirect] false)
+      (assoc-in [:security :hsts] true)))
+
+(def app
+  (wrap-defaults rest-api rest-api-defaults))
