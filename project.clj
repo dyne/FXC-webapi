@@ -25,6 +25,7 @@
                  [ring/ring-core "1.6.1"]
                  [ring/ring-defaults "0.3.0"]
                  [markdown-clj "0.9.99"]
+                 [mvxcvi/clj-pgp "0.8.3"]
                  [org.clojars.dyne/fxc "0.5.0"]]
   :ring {:handler fxc-webapi.handler/app}
   :uberjar-name "server.jar"

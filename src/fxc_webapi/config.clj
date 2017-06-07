@@ -22,12 +22,19 @@
   (:require [clojure.java.io :as io]
             [cheshire.core :refer :all]))
 
-(def config-default {:total (Integer. 5)
+(def config-default {;; FXC
+                     :total (Integer. 5)
                      :quorum (Integer. 3)
                      :max 2048
                      :prime "prime4096"
                      :alphabet "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-                     :salt "gvXpBGp32DRIsPy1m1G3VlWHAF5nsi0auYnMIJQ0odZRKAGC"})
+                     :salt "gvXpBGp32DRIsPy1m1G3VlWHAF5nsi0auYnMIJQ0odZRKAGC"
+                     ;; OpenPGP
+                     :pgp-pub-keyring "~/.gnupg/pubring.gpg"
+                     :pgp-sec-keyring "~/.gnupg/secring.gpg"
+                     })
+
+(defn def [key] {:example (key config-default)})
 
 (defn config-read
   "read configurations from standard locations, overriding defaults or

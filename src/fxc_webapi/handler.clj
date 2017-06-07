@@ -32,11 +32,21 @@
 
 ;; https://github.com/metosin/ring-swagger
 
-(defn get-config
-  [obj] {:pre [(contains? obj :config)]}
-  (let [mc (merge config-default (:config obj))]
-    (merge mc {:total  (Integer. (:total mc))
-               :quorum (Integer. (:quorum mc))})))
+;; sanitize configuration or returns nil if not found
+(defn get-config [obj]
+  (if (contains? obj :config)
+    (let [mc (merge config-default (:config obj))]
+      (merge mc {:total  (Integer. (:total mc))
+                 :quorum (Integer. (:quorum mc))}))
+    nil))
+
+;; generic wrapper to make conf structure optional on fxc calls
+(defn run-fxc [func obj schema]
+  (if-let [conf (get-config obj)]
+    {:data (func conf (:data obj))
+     :config conf}
+    {:data (func config-default (:data obj))
+     :config config-default}))
 
 
 (def config-scheme
@@ -50,20 +60,22 @@
    (rjs/field s/Str {:example "gvXpBGp32DRIsPy1m1G3VlWHAF5nsi0auYnMIJQ0odZRKAGC"})
    (s/optional-key :prime) (rjs/field s/Str {:example 'prime4096})
    (s/optional-key :max) (rjs/field s/Int {:example 256})
+   (s/optional-key :pgp-pub-keyring) s/Str
+   (s/optional-key :pgp-sec-keyring) s/Str
    })
 
 (s/defschema Config
   {(s/required-key :config) config-scheme})
 
 (s/defschema Secret
-  {(s/required-key :secret)
+  {(s/required-key :data)
    (rjs/field s/Str {:example "La gatta sul tetto che scotta"})
    (s/optional-key :config) config-scheme
    })
 
 
 (s/defschema Shares
-  {(s/required-key :shares)
+  {(s/required-key :data)
    (rjs/field
     [s/Str]
     {:example
@@ -112,25 +124,23 @@ secret into `total` shares, for which a `quorum` quantity of shares is
 enough to retrieve the original secret.
 
 "
-                  (ok (let [conf (get-config secret)]
-                        {:shares (fxc/encode conf (:secret secret))
-                         :config conf})))
+                  (ok (run-fxc fxc/encode secret Secret)))
+
 
 
             (POST "/combine" []
                   :return Secret
                   :body [shares Shares]
                   :summary "Combine shares into a secret"
-                  (ok (let [conf (get-config shares)]
-                        {:secret (fxc/decode conf (:shares shares))
-                         :config conf})))
+                  (ok (run-fxc fxc/decode shares Shares)))
+
 
             (POST "/generate" []
                   :return Secret
                   :body [config Config]
                   :summary "Generate a random string of defined length"
-                  (ok (let [conf (get-config config)]
-                        {:secret (fxc/generate conf (:max conf))
+                  (ok (if-let [conf (get-config config)]
+                        {:data (fxc/generate conf (:max conf))
                          :config conf})))
             )))
 
