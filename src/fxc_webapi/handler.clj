@@ -82,7 +82,7 @@
    (context "/fxc/v1" []
             :tags ["FXC"]
 
-            (GET "/secrets" []
+            (POST "/secrets" []
                   :return Shares
                   :body [secret Secret]
                   :summary "Split a secret into shares"
@@ -102,7 +102,7 @@ enough to retrieve the original secret.
 
 
 
-            (POST "/secrets" []
+            (PUT "/secrets" []
                   :return Secret
                   :body [shares Shares]
                   :summary "Combine shares into a secret"
