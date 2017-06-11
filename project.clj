@@ -21,7 +21,8 @@
 (defproject fxc-webapi "0.1.0-SNAPSHOT"
   :description "FXC web API for simple secret sharing"
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [metosin/compojure-api "2.0.0-alpha1"]
+                 [metosin/compojure-api "1.1.10"]
+  ;;               [metosin/compojure-api "2.0.0-alpha1"]
                  [ring/ring-core "1.6.1"]
                  [ring/ring-defaults "0.3.0"]
                  [markdown-clj "0.9.99"]
